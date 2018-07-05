@@ -1,0 +1,4 @@
+.vscode/
+config.py
+data/
+__pycache__/
