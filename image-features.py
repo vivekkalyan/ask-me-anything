@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
+import torchvision.transforms as transforms
 from torchvision import models
+import h5py
 
+import data
 import config
 
 class ImageFeaturesNet(nn.Module):
@@ -38,11 +41,36 @@ def create_coco_loader(path):
     )
     return data_loader
 
+def create_preprocessed_file(model, input_images_path, output_file_path):
+    loader = create_coco_loader(input_images_path)
+    features_shape = (
+        len(loader.dataset),
+        config.output_features,
+        config.output_size,
+        config.output_size
+    )
+
+    with h5py.File(output_file_path, libver='latest') as f:
+        features = f.create_dataset('features', shape=features_shape, dtype='float16')
+        coco_ids = f.create_dataset('ids', shape=(len(loader.dataset),), dtype='int32')
+
+        a = 0
+        b = 0
+        for _, (ids, images) in enumerate(loader):
+            output = model(images)
+
+            b = a + imgs.size(0)
+            features[a:b, :, :] = out.data.cpu().numpy().astype('float16')
+            coco_ids[a:b] = ids.numpy().astype('int32')
+            a = b
+
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     net = ImageFeaturesNet()
     net.eval()
     net.to(device)
 
-    train_loader = create_coco_loader(config.train_path)
-    val_loader = create_coco_loader(config.val_path)
+    create_preprocessed_file(net, 'vqa/mscoco/small_sample', 'hello.h5')
+
+if __name__ == '__main__':
+    main()
