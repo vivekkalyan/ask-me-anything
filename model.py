@@ -3,14 +3,39 @@ import torch.nn as nn
 import torch.nn.init as init
 from torch.nn.utils.rnn import pack_padded_sequence
 
+class MainModel(nn.Module):
+    def __init__(self, embedding_tokens):
+        super(MainModel, self).__init__()
+
+        question_features = 1024
+        image_features = config.output_features
+
+        self.text = TextFeatures(
+            embedding_tokens=embedding_tokens,
+            embedding_features=300,
+            lstm_features=question_features,
+            dropout=0.5)
+
+        self.classifier = Classifier(
+            in_features=image_features + question_features,
+            hidden_features=1024,
+            out_features=3000,
+            dropout=0.5)
+
+    def forward(self, img_features, q, q_len):
+        q = self.text(q, q_len)
+        combined = torch.cat([img_features, x], dim=1)
+        out = self.classifier(x)
+        return out  # returned output is not softmax-ed
+
 class Classifier(nn.Module):
     def __init__(self, in_features, hidden_features, out_features, dropout=0.0):
         super(Classifier, self).__init__()
         self.drop1 = nn.Dropout(dropout)
-        self.lin1 = nn.Linear(in_features, mid_features)
+        self.lin1 = nn.Linear(in_features, hidden_features)
         self.relu = nn.ReLU()
         self.drop2 = nn.Dropout(dropout)
-        self.lin2 = nn.Linear(mid_features, out_features)
+        self.lin2 = nn.Linear(hidden_features, out_features)
 
     def forward(self, x):
         x = self.drop1(x)
