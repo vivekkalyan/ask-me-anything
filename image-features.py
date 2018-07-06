@@ -11,6 +11,8 @@ class ImageFeaturesNet(nn.Module):
     def __init__(self):
         super(ImageFeaturesNet, self).__init__()
         self.model = models.resnet152(pretrained=True)
+        self.model.avgpool = EmptyLayer()
+        self.model.fc = EmptyLayer()
 
         def save_output(module, input, output):
             self.buffer = output
@@ -20,6 +22,10 @@ class ImageFeaturesNet(nn.Module):
     def forward(self, x):
         self.model(x)
         return self.buffer
+
+class EmptyLayer(nn.Module):
+    def forward(self, x):
+        return x
 
 def get_transform(target_size, scale_fraction=1.0):
     return transforms.Compose([
@@ -57,9 +63,9 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
         a = 0
         b = 0
         for _, (ids, images) in enumerate(loader):
-            output = model(images)
+            out = model(images)
 
-            b = a + imgs.size(0)
+            b = a + images.size(0)
             features[a:b, :, :] = out.data.cpu().numpy().astype('float16')
             coco_ids[a:b] = ids.numpy().astype('int32')
             a = b
