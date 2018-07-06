@@ -1,8 +1,8 @@
-annotations_val_path = ''
-annotations_train_path = ''
+annotations_val_path = './data/v2_mscoco_train2014_annotations.json'
+annotations_train_path = './data/v2_mscoco_val2014_annotations.json'
 
-vocab_answers_path = ''
-vocab_questions_path = ''
+vocab_answers_path = './data/vocab.answers.json'
+vocab_questions_path = './data/vocab.questions.json'
 
 train_path = 'vqa/mscoco/train2014'
 val_path = 'vqa/mscoco/val2014'

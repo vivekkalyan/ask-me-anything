@@ -3,6 +3,7 @@ from collections import Counter
 import itertools
 import config
 from os.path import isfile
+import re
 
 
 def get_all_questions(questions_list):
@@ -11,8 +12,31 @@ def get_all_questions(questions_list):
     return [q["question"].lower()[:-1].split(' ') for q in questions_list]
 
 
+def _handle_punctuation(s):
+    punctuation_chars = re.escape(r';/[]"{}()=+\_-><@`,?!')
+    punctuation = re.compile(r'([{}])'.format(re.escape(punctuation_chars)))
+    punctuation_with_space = re.compile(
+        r'(?<= )([{0}])|([{0}])(?= )'.format(punctuation_chars))
+
+    if punctuation.search(s) is not None:
+        s = punctuation_with_space.sub('', s)
+        if re.search(re.compile(r'(\d)(,)(\d)'), s) is not None:
+            s = s.replace(',', '')
+        s = punctuation.sub(' ', s)
+        s = re.compile(r'(?!<=\d)(\.)(?!\d)').sub('', s)
+
+    return s
+
+
 def get_all_answers(annotations):
-    return [[a['answer'] for a in ans_dict['answers']] for ans_dict in annotations]
+    list_of_list_of_answers = [
+        [a['answer'] for a in ans_dict['answers']] for ans_dict in annotations]
+
+    for i, list_of_answers in enumerate(list_of_list_of_answers):
+        list_of_list_of_answers[i] = list(
+            map(_handle_punctuation, list_of_answers))
+
+    return list_of_list_of_answers
 
 
 def extract_vocab(list_of_list_of_token, top=None):
@@ -50,7 +74,7 @@ def main():
             f.close()
 
         annotations = annotations_train + annotations_val
-        vocab_answer = extract_vocab(annotations)
+        vocab_answer = extract_vocab(annotations, top=3000)
         with open(config.vocab_answers_path, 'w') as f:
             json.dump(vocab_answer, f)
             f.close()
