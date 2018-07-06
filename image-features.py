@@ -7,6 +7,7 @@ import h5py
 import data
 import config
 
+
 class ImageFeaturesNet(nn.Module):
     def __init__(self):
         super(ImageFeaturesNet, self).__init__()
@@ -23,9 +24,11 @@ class ImageFeaturesNet(nn.Module):
         self.model(x)
         return self.buffer
 
+
 class EmptyLayer(nn.Module):
     def forward(self, x):
         return x
+
 
 def get_transform(target_size, scale_fraction=1.0):
     return transforms.Compose([
@@ -35,6 +38,7 @@ def get_transform(target_size, scale_fraction=1.0):
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225]),
     ])
+
 
 def create_coco_loader(path):
     transform = get_transform(config.image_size, config.scale_fraction)
@@ -47,6 +51,7 @@ def create_coco_loader(path):
     )
     return data_loader
 
+
 def create_preprocessed_file(model, input_images_path, output_file_path):
     loader = create_coco_loader(input_images_path)
     features_shape = (
@@ -57,8 +62,10 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
     )
 
     with h5py.File(output_file_path, libver='latest') as f:
-        features = f.create_dataset('features', shape=features_shape, dtype='float16')
-        coco_ids = f.create_dataset('ids', shape=(len(loader.dataset),), dtype='int32')
+        features = f.create_dataset(
+            'features', shape=features_shape, dtype='float16')
+        coco_ids = f.create_dataset('ids', shape=(
+            len(loader.dataset),), dtype='int32')
 
         a = 0
         b = 0
@@ -70,13 +77,16 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
             coco_ids[a:b] = ids.numpy().astype('int32')
             a = b
 
+
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     net = ImageFeaturesNet()
     net.eval()
     net.to(device)
 
-    create_preprocessed_file(net, 'vqa/mscoco/small_sample', 'hello.h5')
+    create_preprocessed_file(
+        net, 'vqa/mscoco/small_sample', config.img_feature_path)
+
 
 if __name__ == '__main__':
     main()
