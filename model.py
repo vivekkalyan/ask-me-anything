@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.init as init
 from torch.nn.utils.rnn import pack_padded_sequence
 
+import config
+
+
 class MainModel(nn.Module):
     def __init__(self, embedding_tokens):
         super(MainModel, self).__init__()
@@ -16,6 +19,8 @@ class MainModel(nn.Module):
             lstm_features=question_features,
             dropout=0.5)
 
+        self.img_conv = nn.Conv2d(image_features, image_features, kernel_size=config.output_size)
+
         self.classifier = Classifier(
             in_features=image_features + question_features,
             hidden_features=1024,
@@ -24,9 +29,12 @@ class MainModel(nn.Module):
 
     def forward(self, img_features, q, q_len):
         q = self.text(q, q_len)
-        combined = torch.cat([img_features, x], dim=1)
-        out = self.classifier(x)
+        img_features = self.img_conv(img_features)
+        img_features = img_features.view(img_features.size()[0], -1)
+        combined = torch.cat([img_features, q], dim=1)
+        out = self.classifier(combined)
         return out  # returned output is not softmax-ed
+
 
 class Classifier(nn.Module):
     def __init__(self, in_features, hidden_features, out_features, dropout=0.0):
@@ -45,10 +53,12 @@ class Classifier(nn.Module):
         x = self.lin2(x)
         return x
 
+
 class TextFeatures(nn.Module):
     def __init__(self, embedding_tokens, embedding_features, lstm_features, dropout=0.0):
         super(TextFeatures, self).__init__()
-        self.embedding = nn.Embedding(embedding_tokens, embedding_features, padding_idx=0)
+        self.embedding = nn.Embedding(
+            embedding_tokens, embedding_features, padding_idx=0)
         self.drop = nn.Dropout(dropout)
         self.tanh = nn.Tanh()
         self.lstm = nn.LSTM(input_size=embedding_features,
@@ -59,11 +69,11 @@ class TextFeatures(nn.Module):
 
     def _init(self, lstm, embedding):
         # lstm
-        for w in lstm.weight_ih_l0.chunk(4,0):
+        for w in lstm.weight_ih_l0.chunk(4, 0):
             init.xavier_uniform_(w)
         lstm.bias_ih_l0.data.zero_()
 
-        for w in lstm.weight_hh_l0.chunk(4,0):
+        for w in lstm.weight_hh_l0.chunk(4, 0):
             init.xavier_uniform_(w)
         lstm.bias_hh_l0.data.zero_()
 
@@ -76,3 +86,14 @@ class TextFeatures(nn.Module):
         packed = pack_padded_sequence(tanhed, q_len, batch_first=True)
         _, (_, c) = self.lstm(packed)
         return c.squeeze(0)
+
+
+def tile_2d_over_nd(feature_vector, feature_map):
+    """ Repeat the same feature vector over all spatial positions of a given feature map.
+        The feature vector should have the same batch size and number of features as the feature map.
+    """
+    n, c = feature_vector.size()
+    spatial_size = feature_map.dim() - 2
+    tiled = feature_vector.view(
+        n, c, *([1] * spatial_size)).expand_as(feature_map)
+    return tiled

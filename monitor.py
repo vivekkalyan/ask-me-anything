@@ -1,3 +1,6 @@
+import math
+import time
+
 def batch_acc(predicted, true):
     '''
     Calculate the accuracy of batch 
@@ -22,3 +25,11 @@ def batch_acc(predicted, true):
     same = true.gather(dim=1, index=predex)
 
     return (same * 0.3).clamp(max=1)
+
+
+def timeSince(since):
+    now = time.time()
+    s = now - since
+    m = math.floor(s / 60)
+    s -= m * 60
+    return '%dm %ds' % (m, s)

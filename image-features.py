@@ -77,6 +77,8 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
             coco_ids[a:b] = ids.numpy().astype('int32')
             a = b
 
+        f.close()
+
 
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -85,7 +87,7 @@ def main():
     net.to(device)
 
     create_preprocessed_file(
-        net, 'vqa/mscoco/small_sample', config.img_feature_path)
+        net, config.img_path, config.img_feature_path)
 
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ import torch.utils.data as data
 from PIL import Image
 import json
 import h5py
+import random
 
 import config
 import vocab
@@ -47,6 +48,7 @@ class VQAData(data.Dataset):
         super(VQAData, self).__init__()
 
         self.img_features_path = img_feature_path
+        print('Generating map of COCO ids to index. Please wait...')
         self.img_id_to_idx = self.create_map_coco_id_to_index()
 
         with open(questions_path, 'r') as f:
@@ -60,24 +62,32 @@ class VQAData(data.Dataset):
             f.close()
 
         if not os.path.isfile(vocab_q_path):
+            print('Generating question vocab. Please wait...')
             all_questions = [] + self.questions
             with open(config.questions_val_path if questions_path == config.questions_train_path else config.questions_train_path) as f:
                 all_questions += vocab.get_all_questions(
                     json.load(f)['questions'])
                 f.close()
             self.q_vocab = vocab.extract_vocab(all_questions)
+            with open(vocab_q_path, 'w') as f:
+                json.dump(self.q_vocab, f)
+                f.close()
         else:
             with open(vocab_q_path) as f:
                 self.q_vocab = json.load(f)
                 f.close()
 
         if not os.path.isfile(vocab_a_path):
+            print('Generating answer vocab. Please wait...')
             all_answers = [] + self.answers
             with open(config.annotations_val_path if annotations_path == config.annotations_train_path else config.annotations_train_path) as f:
                 all_answers += vocab.get_all_answers(
                     json.load(f)['annotations'])
                 f.close()
             self.a_vocab = vocab.extract_vocab(all_answers, top=3000)
+            with open(vocab_a_path, 'w') as f:
+                json.dump(self.a_vocab, f)
+                f.close()
         else:
             with open(vocab_a_path) as f:
                 self.a_vocab = json.load(f)
@@ -92,10 +102,10 @@ class VQAData(data.Dataset):
 
     def create_map_coco_id_to_index(self):
         ids = None
-        if not hasattr(self, 'features_file'):
-            self.features_file = h5py.File(self.img_features_path)
 
-        ids = self.features_file['ids'][()]
+        with h5py.File(self.img_features_path, 'r') as features_file:
+            ids = features_file['ids'][()]
+            features_file.close()
 
         return {identity: idx for idx, identity in enumerate(ids)}
 
@@ -110,8 +120,8 @@ class VQAData(data.Dataset):
     def one_hot_answer(self, answers):
         rtv = torch.zeros(len(self.a_vocab))
         for a in answers:
-            idx = self.a_vocab[a]
-            if idx is not None:
+            if a in self.a_vocab:
+                idx = self.a_vocab[a]
                 rtv[idx] += 1
 
         return rtv
@@ -119,7 +129,7 @@ class VQAData(data.Dataset):
     def questions_with_answers(self):
         '''return list of questions indices with answers that's in vocab'''
         rtv = []
-        for i, answers in self.answers:
+        for i, answers in enumerate(self.answers):
             if len(answers.nonzero()) > 0:
                 rtv.append(i)
 
@@ -127,11 +137,24 @@ class VQAData(data.Dataset):
 
     def get_img(self, img_id):
         if not hasattr(self, 'features_file'):
-            self.features_file = h5py.File(self.img_features_path)
-        idx = self.img_id_to_idx[img_id]
+            self.features_file = h5py.File(self.img_features_path, 'r')
+
+        # just to clear img id not found error during testing with less data
+        # will need to be deleted later
+        if img_id in self.img_id_to_idx:
+            idx = self.img_id_to_idx[img_id]
+        else:
+            idx = self.img_id_to_idx[random.choice(
+                list(self.img_id_to_idx.keys()))]
+        ###############
+        # and changed to the below line
+        # idx = self.img_id_to_idx[img_id]
         images = self.features_file['features']
         img = images[idx].astype('float32')
         return torch.from_numpy(img)
+
+    def num_tokens(self):
+        return len(self.q_vocab) + 1
 
     def __len__(self):
         if self.only_with_answer:
@@ -149,3 +172,17 @@ class VQAData(data.Dataset):
         img = self.get_img(img_id)
 
         return img, q, a, idx, q_len
+
+
+def create_vqa_loader(train=True):
+    questions_path = config.questions_train_path if train else config.questions_val_path
+    annotations_path = config.annotations_train_path if train else config.annotations_val_path
+    dset = VQAData(questions_path=questions_path,
+                   annotations_path=annotations_path, only_with_answer=train)
+
+    return data.DataLoader(dset, batch_size=config.batch_size, shuffle=train, num_workers=config.data_workers, collate_fn=descending_in_len)
+
+
+def descending_in_len(batch):
+    batch.sort(key=lambda x: x[-1], reverse=True)
+    return data.dataloader.default_collate(batch)

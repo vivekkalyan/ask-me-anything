@@ -6,6 +6,7 @@ questions_val_path = './data/v2_OpenEnded_mscoco_val2014_questions.json'
 vocab_answers_path = './data/vocab.answers.json'
 vocab_questions_path = './data/vocab.questions.json'
 img_feature_path = './data/img_features.h5'
+img_path = './data/sample'
 
 train_path = 'vqa/mscoco/train2014'
 val_path = 'vqa/mscoco/val2014'
@@ -18,3 +19,11 @@ scale_fraction = 0.875
 image_batch_size = 64
 
 data_workers = 4
+
+# data loader config
+batch_size = 4
+
+# training config
+initial_learning_rate = 1e-3
+lr_halflife = 5e4
+epochs = 10
