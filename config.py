@@ -5,9 +5,9 @@ questions_val_path = './data/v2_OpenEnded_mscoco_val2014_questions.json'
 
 vocab_answers_path = './data/vocab.answers.json'
 vocab_questions_path = './data/vocab.questions.json'
-img_feature_path = './data/img_features.h5'
-img_path = './data/sample'
 
+img_feature_train_path = './data/img_features.train.h5'
+img_feature_val_path = './data/img_features.val.h5'
 train_path = 'vqa/mscoco/train2014'
 val_path = 'vqa/mscoco/val2014'
 

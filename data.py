@@ -44,7 +44,7 @@ class CocoImages(data.Dataset):
 
 
 class VQAData(data.Dataset):
-    def __init__(self, questions_path=config.questions_train_path, annotations_path=config.annotations_train_path,  vocab_q_path=config.vocab_questions_path, vocab_a_path=config.vocab_answers_path, img_feature_path=config.img_feature_path, only_with_answer=False):
+    def __init__(self, questions_path=config.questions_train_path, annotations_path=config.annotations_train_path,  vocab_q_path=config.vocab_questions_path, vocab_a_path=config.vocab_answers_path, img_feature_path=config.img_feature_train_path, only_with_answer=False):
         super(VQAData, self).__init__()
 
         self.img_features_path = img_feature_path
@@ -177,8 +177,9 @@ class VQAData(data.Dataset):
 def create_vqa_loader(train=True):
     questions_path = config.questions_train_path if train else config.questions_val_path
     annotations_path = config.annotations_train_path if train else config.annotations_val_path
+    img_feature_path = config.img_feature_train_path if train else config.img_feature_val_path
     dset = VQAData(questions_path=questions_path,
-                   annotations_path=annotations_path, only_with_answer=train)
+                   annotations_path=annotations_path, img_feature_path=img_feature_path, only_with_answer=train)
 
     return data.DataLoader(dset, batch_size=config.batch_size, shuffle=train, num_workers=config.data_workers, collate_fn=descending_in_len)
 

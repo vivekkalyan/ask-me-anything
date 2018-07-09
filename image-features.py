@@ -81,13 +81,15 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
 
 
 def main():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net = ImageFeaturesNet()
     net.eval()
     net.to(device)
 
     create_preprocessed_file(
-        net, config.img_path, config.img_feature_path)
+        net, config.train_path, config.img_feature_train_path)
+    create_preprocessed_file(
+        net, config.val_path, config.img_feature_val_path)
 
 
 if __name__ == '__main__':
