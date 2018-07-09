@@ -19,8 +19,8 @@ class MainModel(nn.Module):
             lstm_features=question_features,
             dropout=0.5)
 
-        self.img_conv = nn.Conv2d(
-            image_features, image_features, kernel_size=config.output_size)
+        self.avgpool = nn.AvgPool2d(
+            kernel_size=config.output_size)
 
         self.classifier = Classifier(
             in_features=image_features + question_features,
@@ -30,7 +30,7 @@ class MainModel(nn.Module):
 
     def forward(self, img_features, q, q_len):
         q = self.text(q, q_len)
-        img_features = self.img_conv(img_features)
+        img_features = self.avgpool(img_features)
         img_features = img_features.view(img_features.size()[0], -1)
         combined = torch.cat([img_features, q], dim=1)
         out = self.classifier(combined)
