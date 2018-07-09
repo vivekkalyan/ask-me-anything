@@ -3,9 +3,12 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from torchvision import models
 import h5py
+from tqdm import tqdm
 
 import data
 import config
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class ImageFeaturesNet(nn.Module):
@@ -69,7 +72,8 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
 
         a = 0
         b = 0
-        for _, (ids, images) in enumerate(loader):
+        for ids, images in tqdm(loader):
+            images = images.to(DEVICE)
             out = model(images)
 
             b = a + images.size(0)
@@ -81,10 +85,9 @@ def create_preprocessed_file(model, input_images_path, output_file_path):
 
 
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net = ImageFeaturesNet()
     net.eval()
-    net.to(device)
+    net.to(DEVICE)
 
     create_preprocessed_file(
         net, config.train_path, config.img_feature_train_path)
