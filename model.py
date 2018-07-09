@@ -19,7 +19,8 @@ class MainModel(nn.Module):
             lstm_features=question_features,
             dropout=0.5)
 
-        self.img_conv = nn.Conv2d(image_features, image_features, kernel_size=config.output_size)
+        self.img_conv = nn.Conv2d(
+            image_features, image_features, kernel_size=config.output_size)
 
         self.classifier = Classifier(
             in_features=image_features + question_features,
@@ -86,14 +87,3 @@ class TextFeatures(nn.Module):
         packed = pack_padded_sequence(tanhed, q_len, batch_first=True)
         _, (_, c) = self.lstm(packed)
         return c.squeeze(0)
-
-
-def tile_2d_over_nd(feature_vector, feature_map):
-    """ Repeat the same feature vector over all spatial positions of a given feature map.
-        The feature vector should have the same batch size and number of features as the feature map.
-    """
-    n, c = feature_vector.size()
-    spatial_size = feature_map.dim() - 2
-    tiled = feature_vector.view(
-        n, c, *([1] * spatial_size)).expand_as(feature_map)
-    return tiled
