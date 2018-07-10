@@ -63,7 +63,7 @@ class Trainer:
 
             if i % print_every == 0:
                 print('Epoch %d %d%% (%s) avg_loss: %.4f avg_acc: %.4f' % (
-                    self.epoch, i / len(loader), timeSince(start_time), np.mean(self.losses), np.mean(self.accuracies)))
+                    self.epoch, float(i) / len(loader) * 100, timeSince(start_time), np.mean(self.losses), np.mean(self.accuracies)))
 
     def eval(self, loader):
         self.model.eval()
@@ -80,11 +80,11 @@ class Trainer:
             out = self.model(img, q, q_len)
             acc = batch_acc(out.data, a.data).cpu()
 
-            final_acc += (acc.mean() * img.size(0)) / len(loader.dataset)
+            final_acc += float(acc.mean() * img.size(0)) / len(loader.dataset)
 
         self.eval_accuracies = np.append(self.eval_accuracies, final_acc)
-        print('Epoch %d %s accuracy on eval set: %d%%' %
-              (self.epoch, timeSince(start_time), final_acc))
+        print('Epoch %d %s accuracy on eval set: %.2f%%' %
+              (self.epoch, timeSince(start_time), final_acc * 100))
 
     def save_model(self, name):
         torch.save(self.model.state_dict(), name + '_epoch_' + str(self.epoch))
@@ -99,9 +99,9 @@ def main():
         [p for p in main_model.parameters() if p.requires_grad])
 
     trainer = Trainer(main_model, optimizer)
-    plot_every = 5000
+    plot_every = 100
     for i in range(config.epochs):
-        trainer.run_epoch(train_loader, print_every=5000, plot_every=plot_every)
+        trainer.run_epoch(train_loader, print_every=200, plot_every=plot_every)
         trainer.eval(eval_loader)
         trainer.save_model('VQA_wo_Attention')
 

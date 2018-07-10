@@ -21,7 +21,7 @@ image_batch_size = 4
 data_workers = 1
 
 # data loader config
-batch_size = 64
+batch_size = 512
 
 # training config
 initial_learning_rate = 1e-3
