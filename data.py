@@ -52,19 +52,21 @@ class VQAData(data.Dataset):
         self.img_id_to_idx = self.create_map_coco_id_to_index()
 
         with open(questions_path, 'r') as f:
+            print('Getting all questions. Please wait...')
             raw_questions = json.load(f)['questions']
             self.img_ids = [q['image_id'] for q in raw_questions]
             self.questions = vocab.get_all_questions(raw_questions)
             self.max_question_len = max(list(map(len, self.questions)))
             f.close()
         with open(annotations_path, 'r') as f:
+            print('Getting all answers. Please wait...')
             self.answers = vocab.get_all_answers(json.load(f)['annotations'])
             f.close()
 
         if not os.path.isfile(vocab_q_path):
             print('Generating question vocab. Please wait...')
-            all_questions = [] + self.questions
-            with open(config.questions_val_path if questions_path == config.questions_train_path else config.questions_train_path) as f:
+            all_questions = []
+            with open(config.questions_train_path) as f:
                 all_questions += vocab.get_all_questions(
                     json.load(f)['questions'])
                 f.close()
@@ -76,11 +78,12 @@ class VQAData(data.Dataset):
             with open(vocab_q_path) as f:
                 self.q_vocab = json.load(f)
                 f.close()
+            print('Question vocab loaded!')
 
         if not os.path.isfile(vocab_a_path):
             print('Generating answer vocab. Please wait...')
-            all_answers = [] + self.answers
-            with open(config.annotations_val_path if annotations_path == config.annotations_train_path else config.annotations_train_path) as f:
+            all_answers = []
+            with open(config.annotations_train_path) as f:
                 all_answers += vocab.get_all_answers(
                     json.load(f)['annotations'])
                 f.close()
@@ -92,6 +95,7 @@ class VQAData(data.Dataset):
             with open(vocab_a_path) as f:
                 self.a_vocab = json.load(f)
                 f.close()
+            print('Answer vocab loaded!')
 
         self.questions = list(map(self.process_question, self.questions))
         self.answers = list(map(self.one_hot_answer, self.answers))
@@ -107,13 +111,15 @@ class VQAData(data.Dataset):
             ids = features_file['ids'][()]
             features_file.close()
 
+
         return {identity: idx for idx, identity in enumerate(ids)}
 
     def process_question(self, question):
         rtv = torch.zeros(self.max_question_len).long()
         for i, tok in enumerate(question):
-            idx = self.q_vocab[tok]
-            rtv[i] = idx
+            if tok in self.q_vocab:
+                idx = self.q_vocab[tok]
+                rtv[i] = idx
 
         return rtv, len(question)
 
@@ -170,7 +176,6 @@ class VQAData(data.Dataset):
         a = self.answers[idx]
         img_id = self.img_ids[idx]
         img = self.get_img(img_id)
-
         return img, q, a, idx, q_len
 
 
@@ -181,7 +186,7 @@ def create_vqa_loader(train=True):
     dset = VQAData(questions_path=questions_path,
                    annotations_path=annotations_path, img_feature_path=img_feature_path, only_with_answer=train)
 
-    return data.DataLoader(dset, batch_size=config.batch_size, shuffle=train, num_workers=config.data_workers, collate_fn=descending_in_len)
+    return data.DataLoader(dset, batch_size=config.batch_size, shuffle=train, pin_memory=True, num_workers=config.data_workers, collate_fn=descending_in_len)
 
 
 def descending_in_len(batch):
