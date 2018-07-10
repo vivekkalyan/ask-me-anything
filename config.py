@@ -1,7 +1,7 @@
-annotations_val_path = './data/v2_mscoco_train2014_annotations.json'
-annotations_train_path = './data/v2_mscoco_val2014_annotations.json'
-questions_train_path = './data/v2_OpenEnded_mscoco_train2014_questions.json'
-questions_val_path = './data/v2_OpenEnded_mscoco_val2014_questions.json'
+annotations_train_path = './data/annotations/v2_mscoco_train2014_annotations.json'
+annotations_val_path = './data/annotations/v2_mscoco_val2014_annotations.json'
+questions_train_path = './data/questions/v2_OpenEnded_mscoco_train2014_questions.json'
+questions_val_path = './data/questions/v2_OpenEnded_mscoco_val2014_questions.json'
 
 vocab_answers_path = './data/vocab.answers.json'
 vocab_questions_path = './data/vocab.questions.json'
@@ -18,10 +18,10 @@ output_features = 2048
 scale_fraction = 0.875
 image_batch_size = 4
 
-data_workers = 4
+data_workers = 1
 
 # data loader config
-batch_size = 4
+batch_size = 64
 
 # training config
 initial_learning_rate = 1e-3
