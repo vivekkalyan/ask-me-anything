@@ -89,6 +89,7 @@ class Trainer:
     def save_checkpoint(self, filename):
         torch.save({
             'epoch': self.epoch,
+            'iterations': self.iterations,
             'state_dict': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'losses': self.losses,
@@ -99,6 +100,7 @@ class Trainer:
     def load_checkpoint(self, filename):
         checkpoint = torch.load(filename)
         self.epoch = checkpoint['epoch']
+        self.iterations = checkpoint['iterations']
         self.model.load_state_dict(checkpoint['state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.losses = checkpoint['losses']
