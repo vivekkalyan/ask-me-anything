@@ -124,14 +124,14 @@ def main():
 
     plt.plot(np.array(range(len(trainer.losses))) * plot_every, trainer.losses)
     plt.title('Training losses of Model without Attention')
-    plt.xlab('Iterations')
-    plt.ylab('Losses')
+    plt.xlabel('Iterations')
+    plt.ylabel('Losses')
     plt.show()
 
     plt.plot(trainer.eval_accuracies)
     plt.title('Eval acccuracies of Model without Attention')
-    plt.xlab('Epochs')
-    plt.ylab('Accuracies')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracies')
     plt.show()
 
 
