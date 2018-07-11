@@ -86,8 +86,24 @@ class Trainer:
         print('Epoch %d %s accuracy on eval set: %.2f%%' %
               (self.epoch, timeSince(start_time), final_acc * 100))
 
-    def save_model(self, name):
-        torch.save(self.model.state_dict(), name + '_epoch_' + str(self.epoch))
+    def save_checkpoint(self, filename):
+        torch.save({
+            'epoch': self.epoch,
+            'state_dict': self.model.state_dict(),
+            'optimizer': self.optimizer.state_dict(),
+            'losses': self.losses,
+            'accuracies': self.accuracies,
+            'eval_accuracies': self.eval_accuracies,
+        }, filename)
+
+    def load_checkpoint(self, filename):
+        checkpoint = torch.load(filename)
+        self.epoch = checkpoint['epoch']
+        self.model.load_state_dict(checkpoint['state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.losses = checkpoint['losses']
+        self.accuracies = checkpoint['accuracies']
+        self.eval_accuracies = checkpoint['eval_accuracies']
 
 
 def main():
@@ -103,7 +119,8 @@ def main():
     for i in range(config.epochs):
         trainer.run_epoch(train_loader, print_every=200, plot_every=plot_every)
         trainer.eval(eval_loader)
-        trainer.save_model('VQA_wo_Attention')
+        trainer.save_checkpoint(
+            'VQA_with_Attention_epoch_' + str(trainer.epoch))
 
     plt.plot(np.array(range(len(trainer.losses))) * plot_every, trainer.losses)
     plt.title('Training losses of Model without Attention')
