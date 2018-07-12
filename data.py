@@ -63,39 +63,7 @@ class VQAData(data.Dataset):
             self.answers = vocab.get_all_answers(json.load(f)['annotations'])
             f.close()
 
-        if not os.path.isfile(vocab_q_path):
-            print('Generating question vocab. Please wait...')
-            all_questions = []
-            with open(config.questions_train_path) as f:
-                all_questions += vocab.get_all_questions(
-                    json.load(f)['questions'])
-                f.close()
-            self.q_vocab = vocab.extract_vocab(all_questions)
-            with open(vocab_q_path, 'w') as f:
-                json.dump(self.q_vocab, f)
-                f.close()
-        else:
-            with open(vocab_q_path) as f:
-                self.q_vocab = json.load(f)
-                f.close()
-            print('Question vocab loaded!')
-
-        if not os.path.isfile(vocab_a_path):
-            print('Generating answer vocab. Please wait...')
-            all_answers = []
-            with open(config.annotations_train_path) as f:
-                all_answers += vocab.get_all_answers(
-                    json.load(f)['annotations'])
-                f.close()
-            self.a_vocab = vocab.extract_vocab(all_answers, top=3000)
-            with open(vocab_a_path, 'w') as f:
-                json.dump(self.a_vocab, f)
-                f.close()
-        else:
-            with open(vocab_a_path) as f:
-                self.a_vocab = json.load(f)
-                f.close()
-            print('Answer vocab loaded!')
+        self.q_vocab, self.a_vocab = vocab.retrieve_vocab(vocab_q_path, vocab_a_path, questions_path, annotations_path)
 
         self.questions = list(map(self.process_question, self.questions))
         self.answers = list(map(self.one_hot_answer, self.answers))

@@ -72,6 +72,46 @@ def extract_vocab(list_of_list_of_token, top=None):
     return vocab
 
 
+def retrieve_vocab(vocab_q_path, vocab_a_path, questions_path, annotations_path):
+    # if vocab files don't exist, generate vocab for questions and annotations
+    # else, read in vocab from vocab files
+    
+    if not isfile(vocab_q_path):
+        print('Generating question vocab. Please wait...')
+        all_questions = []
+        with open(questions_path) as f:
+            all_questions += get_all_questions(
+                json.load(f)['questions'])
+            f.close()
+        q_vocab = extract_vocab(all_questions)
+        with open(vocab_q_path, 'w') as f:
+            json.dump(q_vocab, f)
+            f.close()
+    else:
+        with open(vocab_q_path) as f:
+            q_vocab = json.load(f)
+            f.close()
+        print('Question vocab loaded!')
+
+    if not isfile(vocab_a_path):
+        print('Generating answer vocab. Please wait...')
+        all_answers = []
+        with open(annotations_path) as f:
+            all_answers += get_all_answers(
+                json.load(f)['annotations'])
+            f.close()
+        a_vocab = extract_vocab(all_answers, top=3000)
+        with open(vocab_a_path, 'w') as f:
+            json.dump(a_vocab, f)
+            f.close()
+    else:
+        with open(vocab_a_path) as f:
+            a_vocab = json.load(f)
+            f.close()
+        print('Answer vocab loaded!')
+
+    return q_vocab, a_vocab
+
 def main():
     # for testing purpose and demo of how to use
     vocab_answer = None

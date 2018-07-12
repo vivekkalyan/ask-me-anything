@@ -72,7 +72,7 @@ class Attention(nn.Module):
 
         attention = attention.view(n, glimpses, -1) # batch x glimpses x output_size*output_size
         attention = attention.view(n * glimpses, -1) # batch*glimpses x output_size*output_size
-        attention = F.softmax(attention)
+        attention = F.softmax(attention, dim=1)
 
         image = image.view(n, c, -1) # batch x image_features x output_size*output_size
         image = image.view(n, 1, c, s).expand(*target_size)
