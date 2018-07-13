@@ -54,7 +54,7 @@ def get_all_answers(annotations):
     return list_of_list_of_answers
 
 
-def extract_vocab(list_of_list_of_token, top=None):
+def extract_vocab(list_of_list_of_token, top=None, starting_idx=0):
     all_tokens = itertools.chain.from_iterable(list_of_list_of_token)
 
     # counter example Counter({'what': 9, 'is': 8, 'this': 6}) {<word>: <frequency>}
@@ -67,7 +67,7 @@ def extract_vocab(list_of_list_of_token, top=None):
 
     tokens = sorted(most_common, key=lambda word: (
         counter[word], word), reverse=True)
-    vocab = {word: idx for idx, word in enumerate(tokens)}
+    vocab = {word: idx for idx, word in enumerate(tokens, start=starting_idx)}
 
     return vocab
 
@@ -83,7 +83,7 @@ def retrieve_vocab(vocab_q_path, vocab_a_path, questions_path, annotations_path)
             all_questions += get_all_questions(
                 json.load(f)['questions'])
             f.close()
-        q_vocab = extract_vocab(all_questions)
+        q_vocab = extract_vocab(all_questions, starting_idx=1)
         with open(vocab_q_path, 'w') as f:
             json.dump(q_vocab, f)
             f.close()
