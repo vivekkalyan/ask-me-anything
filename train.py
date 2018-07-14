@@ -97,8 +97,8 @@ class Trainer:
             'eval_accuracies': self.eval_accuracies,
         }, filename)
 
-    def load_checkpoint(self, filename):
-        checkpoint = torch.load(filename)
+    def load_checkpoint(self, filename, location):
+        checkpoint = torch.load(filename, map_location=location)
         self.epoch = checkpoint['epoch']
         self.iterations = checkpoint['iterations']
         self.model.load_state_dict(checkpoint['state_dict'])
