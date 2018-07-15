@@ -72,7 +72,11 @@ Flatten the output
 The output from attention map and question features are concatenated and passed through a fully connected network with 1024 hidden units. It has 3000 output units, corresponding to the 3000 most frequent answers in the dataset. Therefore, after this a softmax determines the most likely answer based on the entire model.
 
 ### Results
-**Validation Score**
+The loss from the training
+![training loss](graphs/training_losses.png)
+
+The model converges to about ~51% accuracy on the validation dataset.
+![evaluation_accuracy](graphs/eval_accuracies.png)
 
 **Interesting Results**
 
