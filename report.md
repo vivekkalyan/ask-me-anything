@@ -4,6 +4,10 @@ This project is a implementation of the paper: [Show, Ask, Attend, and Answer: A
 
 Deep neural networks have exploded into the industry, transforming the computer vision and natural language processing fields. Networks are able to confidently distinguish between cancer cells and translate English to French. Visual Question Answering (VQA) is an interesting intersection between these two fields. Given a image and a question about the image, and the network learns to interpret the question and image to return an answer for that question. This has many immediate applications, such as helping the blind ask questions about the world or recognising a animal in the wildlife.
 
+### Demo
+
+[Try it live!](http://ask-me-anything.surge.sh)
+
 ### Dataset
 
 This implementation uses the Balanced Real Images from the visualQA dataset which contains ~120k images and ~650k questions.
