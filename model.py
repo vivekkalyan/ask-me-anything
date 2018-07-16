@@ -38,18 +38,19 @@ class MainModel(nn.Module):
             dropout=0.5)
 
     def forward(self, img_features, question, q_len):
-        import pdb; pdb.set_trace();
         question = self.text(question, q_len)
         img_features = self.attention(img_features, question)
         combined = torch.cat([img_features, question], dim=1)
         out = self.classifier(combined)
         return out  # returned output is not softmax-ed
 
+
 class Attention(nn.Module):
     def __init__(self, image_features, question_features, mid_features, glimpses, dropout=0.0):
         super(Attention, self).__init__()
 
-        self.image_conv = nn.Conv2d(image_features, mid_features, 1, bias=False)
+        self.image_conv = nn.Conv2d(
+            image_features, mid_features, 1, bias=False)
         self.question_lin = nn.Linear(question_features, mid_features)
         self.attention_conv = nn.Conv2d(mid_features, glimpses, 1)
         self.drop = nn.Dropout(dropout)
@@ -58,35 +59,46 @@ class Attention(nn.Module):
     def forward(self, image, question):
         # image: batch x image_features x output_size x output_size
         # question: batch x question_features
-        image_conv = self.image_conv(self.drop(image)) # batch x mid_features x output_size x output_size
-        question = self.question_lin(self.drop(question)) # batch x mid_features
-        question = self.repeat_over_2d(question, image_conv) # batch x mid_features x output_size x output_size
-        combined = image_conv + question # batch x mid_features x output_size x output_size
+        # batch x mid_features x output_size x output_size
+        image_conv = self.image_conv(self.drop(image))
+        question = self.question_lin(
+            self.drop(question))  # batch x mid_features
+        # batch x mid_features x output_size x output_size
+        question = self.repeat_over_2d(question, image_conv)
+        # batch x mid_features x output_size x output_size
+        combined = image_conv + question
         combined = self.relu(combined)
-        attention = self.attention_conv(self.drop(combined)) # batch x glimpses x output_size x output_size
+        # batch x glimpses x output_size x output_size
+        attention = self.attention_conv(self.drop(combined))
 
         n, c = image.size()[:2]
         s = image.size(2)*image.size(3)
         glimpses = attention.size(1)
         target_size = [n, glimpses, c, s]
 
-        attention = attention.view(n, glimpses, -1) # batch x glimpses x output_size*output_size
-        attention = attention.view(n * glimpses, -1) # batch*glimpses x output_size*output_size
+        # batch x glimpses x output_size*output_size
+        attention = attention.view(n, glimpses, -1)
+        # batch*glimpses x output_size*output_size
+        attention = attention.view(n * glimpses, -1)
         attention = F.softmax(attention, dim=1)
 
-        image = image.view(n, c, -1) # batch x image_features x output_size*output_size
+        # batch x image_features x output_size*output_size
+        image = image.view(n, c, -1)
         image = image.view(n, 1, c, s).expand(*target_size)
         attention = attention.view(n, glimpses, 1, s).expand(*target_size)
         weighted = image * attention
-        weighted_mean = weighted.sum(dim=3) # batch x glimpses x image_features
-        out = weighted_mean.view(n, -1) # batch x glimpses*image_features
+        # batch x glimpses x image_features
+        weighted_mean = weighted.sum(dim=3)
+        out = weighted_mean.view(n, -1)  # batch x glimpses*image_features
         return out
 
     def repeat_over_2d(self, vector, target_vector):
         n, c = vector.size()
         spatial_size = target_vector.dim() - 2
-        new_vector = vector.view(n, c, *([1] * spatial_size)).expand_as(target_vector)
+        new_vector = vector.view(
+            n, c, *([1] * spatial_size)).expand_as(target_vector)
         return new_vector
+
 
 class Classifier(nn.Module):
     def __init__(self, in_features, hidden_features, out_features, dropout=0.0):
